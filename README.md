@@ -1,2 +1,2 @@
-# Udacity-Data-Scientist-Nanodegree-Assignment-3
+# Udacity-Data-Scientist-Nanodegree-Assignment-2
 Disaster Response Pipeline Project
