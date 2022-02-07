@@ -91,7 +91,7 @@ def build_model():
         ])
     CV = GridSearchCV(pipeline,
                       param_grid = {'rf_multi__estimator__n_estimators': [50,100]},
-                      n_jobs= -1,
+                      n_jobs= 1,
                       cv=2)
     return CV
 
