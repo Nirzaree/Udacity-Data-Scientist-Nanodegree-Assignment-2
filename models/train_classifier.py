@@ -8,9 +8,10 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk import word_tokenize
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
@@ -25,12 +26,11 @@ def load_data(database_filepath):
     '''
     Parameters
     ----------
-    database_filepath : TYPE
-        DESCRIPTION.
+    database_filepath : Reads sqlite database from database_filepath
 
     Returns
     -------
-    None.
+    X, y, y.columns: Tuple of Features, target, category_names
 
     '''
     df = pd.read_sql_table('DisasterResponse1.sql','sqlite:///' + database_filepath)
@@ -39,6 +39,23 @@ def load_data(database_filepath):
     return (X,y,y.columns)
 
 def tokenize(text):
+    '''
+    
+
+    Parameters
+    ----------
+    text : for a given text, the function does the following:
+        i. Converts all words to lowercase
+        ii. Ignores all characters that are not alphabets or numbers.
+        iii. Breaks down sentences into words (word_tokenize)
+        iv. Removes (Englist) stop_words from the tokens.
+        v. Lemmatizes words (reduces each word to its root word)
+
+    Returns
+    -------
+    lem_tokens : Lemmatized word tokens from the input text.
+
+    '''
     text = text.lower()
     text = re.sub(r'[^A-Za-z0-9]',' ',text)
     text = word_tokenize(text)
@@ -52,13 +69,53 @@ def tokenize(text):
 
 
 def build_model():
+    '''
+    This function does the following: 
+        1. Builds a pipeline consisting of 2 steps:
+            a. TfidfVectorizer: Which preprocesses the input text string to 
+                a set of relevant features which the model can process  
+            b. Classifier: Multioutput classifier with randomforest model
+        2. GridSearchCV: We then build a GridSearchCV on the pipeline with 
+        the required parameter grid (to speed up the training, we only 
+        use 1 parameter variation at the moment), and other parameters
+
+    Returns
+    -------
+    CV : Returns the GridSearchCV model, which can now be fit to training data.
+
+    '''
     pipeline = Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize)),
+        # ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('vect', TfidfVectorizer(tokenizer=tokenize)),
          ('rf_multi', MultiOutputClassifier(RandomForestClassifier()))
         ])
-    return pipeline
+    CV = GridSearchCV(pipeline,
+                      param_grid = {'rf_multi__estimator__n_estimators': [50,100]},
+                      n_jobs= -1,
+                      cv=2)
+    return CV
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    
+
+    Parameters
+    ----------
+    model : TYPE
+        DESCRIPTION.
+    X_test : TYPE
+        DESCRIPTION.
+    Y_test : TYPE
+        DESCRIPTION.
+    category_names : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    class_report : TYPE
+        DESCRIPTION.
+
+    '''
     Y_pred = model.predict(X_test)
     class_report = classification_report(y_true = Y_test,
                                          y_pred = Y_pred,
@@ -67,6 +124,19 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    '''
+    The function saves the model as a pickle file, which can be 
+    loaded later for predictions. 
+    Parameters
+    ----------
+    model : Fitted model
+    model_filepath : location to store the model.
+
+    Returns
+    -------
+    None.
+
+    '''
     with open(model_filepath, 'wb') as f:
         pickle.dump(model, f)
     # pickle.dump(model,open(model_filepath),'wb')

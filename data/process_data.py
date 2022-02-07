@@ -4,8 +4,19 @@ from sqlalchemy import create_engine
 import os
 
 def load_data(messages_filepath, categories_filepath):
-    ''' 
-    
+    '''
+    This function loads the messages and categories data, merges them and returns
+    the merged dataframe
+
+    Parameters
+    ----------
+    messages_filepath : path of the messages dataset
+    categories_filepath : path of the categories dataset
+
+    Returns
+    -------
+    df : merged dataframe
+
     '''
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
@@ -13,8 +24,23 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
-    ''' 
+    '''
+    This function generates multiple columns for the category data from the single
+    colon separated column of the categories. 
     
+    For each column, there is a binary value depending on if the input data falls
+    within that category. 
+    
+    The function then concatenates the expanded output categories dataframe to the input
+    messages dataframe and returns the new dataframe.
+
+    Parameters
+    ----------
+    df : Input dataframe with single column 'category' feature
+
+    Returns
+    -------
+    df : Dataframe with cleaned up category feature
     '''
     df['categories'].str.split(';',expand=True)
     categories = df['categories'].str.split(';',expand=True)
@@ -38,7 +64,17 @@ def clean_data(df):
     
 def save_data(df, database_filename):
     '''
-    
+    This function saves the cleaned up dataframe as a sql table in a sqlite database
+
+    Parameters
+    ----------
+    df : Cleaned up dataframe
+    database_filename : Name of the sqlite database to generate
+
+    Returns
+    -------
+    None.
+
     '''
     # filename = os.path.basename(database_filename)
     engine = create_engine('sqlite:///' + database_filename)
