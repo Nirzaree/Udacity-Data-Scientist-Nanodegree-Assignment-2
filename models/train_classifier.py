@@ -89,6 +89,7 @@ def build_model():
         ('vect', TfidfVectorizer(tokenizer=tokenize)),
          ('rf_multi', MultiOutputClassifier(RandomForestClassifier()))
         ])
+    
     CV = GridSearchCV(pipeline,
                       param_grid = {'rf_multi__estimator__n_estimators': [50,100]},
                       n_jobs= 1,
@@ -97,7 +98,8 @@ def build_model():
 
 def evaluate_model(model, X_test, Y_test, category_names):
     '''
-    
+    This function prints classification report for each output category 
+    for X_test. 
 
     Parameters
     ----------
@@ -112,15 +114,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
     Returns
     -------
-    class_report : TYPE
-        DESCRIPTION.
-
+    None. 
     '''
     Y_pred = model.predict(X_test)
-    class_report = classification_report(y_true = Y_test,
-                                         y_pred = Y_pred,
-                                         target_names=category_names)
-    return class_report
+    
+    for colno in range(Y_test.shape[1]):
+        print("Target Column = ", Y_test.columns[colno])
+        print(classification_report(Y_test.iloc[:,colno],Y_pred[:,colno]))
 
 
 def save_model(model, model_filepath):

@@ -50,7 +50,10 @@ def clean_data(df):
     
     # Convert category numbers into 0 or 1
     for col in categories.columns:
-        categories[col] = [x[-1] for x in categories[col]]
+        categories[col] = [int(x[-1]) for x in categories[col]]
+        
+    #Replace values > 1 in "related" column to 1
+    categories[categories['related'] == 2] = 1
         
     # Replace category column in df with new categories
     df.drop(['categories'],axis=1,inplace=True)
@@ -78,7 +81,7 @@ def save_data(df, database_filename):
     '''
     # filename = os.path.basename(database_filename)
     engine = create_engine('sqlite:///' + database_filename)
-    df.to_sql('DisasterResponse1.sql',engine,index=False)
+    df.to_sql('DisasterResponse1.sql',engine,index=False,if_exists='replace')
 
 def main():
     if len(sys.argv) == 4:

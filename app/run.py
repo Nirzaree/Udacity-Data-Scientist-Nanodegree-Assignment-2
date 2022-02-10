@@ -12,7 +12,6 @@ from plotly.graph_objs import Bar
 import joblib
 from sqlalchemy import create_engine
 
-
 app = Flask(__name__)
 
 def tokenize(text):
@@ -44,6 +43,12 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    dfcat = df.drop(['id','message','original','genre'],axis=1)
+    dfcat = dfcat.applymap(int)
+    
+    cat_counts = dfcat.sum().sort_values(ascending=False)
+    cat_names = list(cat_counts.index)
+    
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -62,6 +67,23 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+       {
+        'data': [
+            Bar(
+                x=cat_names,
+                y=cat_counts
+                )
+            ],
+        'layout': {
+            'title': 'Distribution of Message Categories',
+            'yaxis': {
+                'title': "Count"
+                },
+            'xaxis': {
+                'title': "Categories"
                 }
             }
         }
@@ -83,9 +105,7 @@ def go():
 
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
-    classification_labels = [int(x) for interim in classification_labels for x in interim] #added temporarily: Nirzaree" Feb7
     classification_results = dict(zip(df.columns[4:], classification_labels))
-
     # This will render the go.html Please see that file. 
     return render_template(
         'go.html',
